@@ -103,39 +103,53 @@ public class DataFactory<TModel, TDrawingContext>
             }
             var byReferenceVisualMap = d;
 
-            //Try to use list indexer instead of enumerator as the collection of the series is not synchronized
-            if (series.Values is IList<TModel> list)
+            //This is my suggested fix. Uncomment this and comment the original code to stop the InvalidOperationException
+            ////Try to use list indexer instead of enumerator as the collection of the series is not synchronized
+            //if (series.Values is IList<TModel> list)
+            //{
+            //    for (var i = 0; i < list.Count; i++)
+            //    {
+            //        var collectionItem = list[i];
+            //        if (collectionItem == null)
+            //            continue;
+            //
+            //        if (!byReferenceVisualMap.TryGetValue(collectionItem, out var cp))
+            //            byReferenceVisualMap[collectionItem] = cp = new ChartPoint(chart.View, series);
+            //
+            //        cp.Context.Index = index++;
+            //        cp.Context.DataSource = collectionItem;
+            //        mapper(collectionItem, cp);
+            //
+            //        yield return cp;
+            //    }
+            //}
+            ////Fallback: use enumerator
+            //else
+            //{
+            //    foreach (var item in series.Values)
+            //    {
+            //        if (!byReferenceVisualMap.TryGetValue(item, out var cp))
+            //            byReferenceVisualMap[item] = cp = new ChartPoint(chart.View, series);
+            //
+            //        cp.Context.Index = index++;
+            //        cp.Context.DataSource = item;
+            //        mapper(item, cp);
+            //
+            //        yield return cp;
+            //    }
+            //}
+
+            //Original code, this throws an InvalidOperationException using WPF example "HighPerformanceTest"
+            foreach (var item in series.Values)
             {
-                for (var i = 0; i < list.Count; i++)
-                {
-                    var collectionItem = list[i];
-                    if (collectionItem == null)
-                        continue;
-
-                    if (!byReferenceVisualMap.TryGetValue(collectionItem, out var cp))
-                        byReferenceVisualMap[collectionItem] = cp = new ChartPoint(chart.View, series);
-
-                    cp.Context.Index = index++;
-                    cp.Context.DataSource = collectionItem;
-                    mapper(collectionItem, cp);
-
-                    yield return cp;
-                }
-            }
-            //Fallback: use enumerator
-            else
-            {
-                foreach (var item in series.Values)
-                {
-                    if (!byReferenceVisualMap.TryGetValue(item, out var cp))
-                        byReferenceVisualMap[item] = cp = new ChartPoint(chart.View, series);
-
-                    cp.Context.Index = index++;
-                    cp.Context.DataSource = item;
-                    mapper(item, cp);
-
-                    yield return cp;
-                }
+                if (!byReferenceVisualMap.TryGetValue(item, out var cp))
+                    byReferenceVisualMap[item] = cp = new ChartPoint(chart.View, series);
+            
+                cp.Context.Index = index++;
+                cp.Context.DataSource = item;
+                mapper(item, cp);
+            
+                yield return cp;
             }
         }
     }
